@@ -1,0 +1,144 @@
+# Example Terraform variables file for dev environment
+# Copy this file to terraform.tfvars and update with your actual values
+
+# Resource Groups
+Resource_Group = [
+  {
+    location = "westus"
+    name     = "main"
+    tags = {
+      "environment" = "dev"
+      "project"     = "<app-name>"
+      "owner"       = "<company-name>"
+    }
+  }
+]
+
+# Action Groups for monitoring
+Action_Group = [
+  {
+    enabled        = true
+    location       = "global"
+    name          = "dev_alerts"
+    resource_group = "main"
+    short_name    = "DEV_ALERTS"
+    
+    email_receiver = [{
+      email_address = "<admin-email>@<company-domain>"
+      name          = "admin-email"
+    }]
+    
+    webhook_receiver = []
+  }
+]
+
+# Storage Accounts
+Storage_Accounts = [
+  {
+    account_replication_type = "LRS"
+    account_tier            = "Standard"
+    location               = "westus"
+    name                   = "devstorageaccount"
+    resource_group         = "main"
+    
+    tags = {
+      "environment" = "dev"
+      "purpose"     = "general-storage"
+    }
+    
+    network_rules = [{
+      default_action = "Allow"
+      ip_rules       = []
+    }]
+  }
+]
+
+# Virtual Networks
+VNET = [
+  {
+    address_space  = ["10.0.0.0/16"]
+    location      = "westus"
+    name          = "dev-vnet"
+    resource_group = "main"
+    
+    tags = {
+      "environment" = "dev"
+      "purpose"     = "networking"
+    }
+  }
+]
+
+# Subnets
+subnets = [
+  {
+    address_prefixes     = ["10.0.1.0/24"]
+    name                = "dev-subnet"
+    resource_group_name = "w1-dev-main-rg"
+    virtual_network_name = "w1-dev-dev-vnet-vnet"
+  }
+]
+
+# App Service Plans
+Service_Plan_List = [
+  {
+    location       = "westus"
+    name          = "dev-app-plan"
+    os_type       = "Linux"
+    resource_group = "main"
+    sku_name      = "B1"
+    
+    tags = {
+      "environment" = "dev"
+      "purpose"     = "web-hosting"
+    }
+  }
+]
+
+# Key Vaults
+Key_Vault = [
+  {
+    location       = "westus"
+    name          = "dev-keyvault"
+    resource_group = "main"
+    sku_name      = "standard"
+    
+    tags = {
+      "environment" = "dev"
+      "purpose"     = "secrets-management"
+    }
+    
+    access_policy = []
+  }
+]
+
+# Log Analytics Workspaces
+Log_Analytics_Workspace = [
+  {
+    location          = "westus"
+    name             = "dev-log-workspace"
+    resource_group   = "main"
+    retention_in_days = 30
+    sku              = "PerGB2018"
+    
+    tags = {
+      "environment" = "dev"
+      "purpose"     = "logging"
+    }
+  }
+]
+
+# Application Insights
+Application_Insights = [
+  {
+    application_type = "web"
+    location        = "westus"
+    name           = "dev-app-insights"
+    resource_group = "main"
+    workspace_id   = "w1-dev-dev-log-workspace-logawks"
+    
+    tags = {
+      "environment" = "dev"
+      "purpose"     = "monitoring"
+    }
+  }
+]

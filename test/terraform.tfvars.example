@@ -1,0 +1,54 @@
+# Example Terraform variables file for test environment
+# Copy this file to terraform.tfvars and update with your actual values
+
+# Resource Groups
+Resource_Group = [
+  {
+    location = "westus"
+    name     = "main"
+    tags = {
+      "environment" = "test"
+      "project"     = "<app-name>"
+      "owner"       = "<company-name>"
+    }
+  }
+]
+
+# Action Groups for monitoring
+Action_Group = [
+  {
+    enabled        = true
+    location       = "global"
+    name          = "test_alerts"
+    resource_group = "main"
+    short_name    = "TST_ALERTS"
+    
+    email_receiver = [{
+      email_address = "<admin-email>@<company-domain>"
+      name          = "admin-email"
+    }]
+    
+    webhook_receiver = []
+  }
+]
+
+# Storage Accounts
+Storage_Accounts = [
+  {
+    account_replication_type = "LRS"
+    account_tier            = "Standard"
+    location               = "westus"
+    name                   = "teststorageaccount"
+    resource_group         = "main"
+    
+    tags = {
+      "environment" = "test"
+      "purpose"     = "general-storage"
+    }
+    
+    network_rules = [{
+      default_action = "Allow"
+      ip_rules       = []
+    }]
+  }
+]
