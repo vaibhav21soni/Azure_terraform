@@ -25,11 +25,13 @@ Terraform_updated/
 │   ├── variables.tf          # Variable definitions
 │   ├── test.auto.tfvars      # Environment mappings
 │   └── terraform.tfvars      # Resource configurations
-└── prod/                      # Production environment
-    ├── main.tf               # Main configuration
-    ├── variables.tf          # Variable definitions
-    ├── prod.auto.tfvars      # Environment mappings
-    └── terraform.tfvars      # Resource configurations
+├── prod/                      # Production environment
+│   ├── main.tf               # Main configuration
+│   ├── variables.tf          # Variable definitions
+│   ├── prod.auto.tfvars      # Environment mappings
+│   └── terraform.tfvars      # Resource configurations
+├── VARIABLE_FORMATS.md        # Required variable input formats
+└── README.md                  # This file
 ```
 
 ## How It Works
@@ -92,6 +94,10 @@ az account set --subscription "<your-azure-subscription-id>"
 - `<database-password>`
 - `<redis-password>`
 - `<service-bus-key>`
+
+**⚠️ IMPORTANT: Variable Input Formats**
+
+Before running Terraform, ensure your `terraform.tfvars` files follow the correct input formats. See [VARIABLE_FORMATS.md](./VARIABLE_FORMATS.md) for detailed examples of all required variable structures to prevent validation errors.
 
 ## Deployment Workflow
 
@@ -207,7 +213,12 @@ module "resource_group" {
    - Check for existing resources with same names
    - Review resource group contents
 
-4. **State file issues**
+4. **Variable validation errors**
+   - Check [VARIABLE_FORMATS.md](./VARIABLE_FORMATS.md) for correct input formats
+   - Ensure all required attributes are provided
+   - Use empty lists `[]` for unused resources
+
+5. **State file issues**
    ```bash
    terraform refresh  # Sync state with actual resources
    terraform import   # Import existing resources
@@ -244,5 +255,6 @@ terraform plan -detailed-exitcode
 
 For questions or issues:
 1. Check the troubleshooting section
-2. Review module-specific README files
-3. Create an issue in this repository
+2. Review [VARIABLE_FORMATS.md](./VARIABLE_FORMATS.md) for variable format requirements
+3. Review module-specific README files
+4. Create an issue in this repository

@@ -5,14 +5,14 @@ terraform {
       version = "3.59.0"
     }
   }
-
-  backend "azurerm" {
-    resource_group_name  = "<backend-resource-group>"
-    storage_account_name = "<backend-storage-account>"
-    container_name       = "tfstate"
-    key                  = "test.terraform.tfstate"
-  }
 }
+#   backend "azurerm" {
+#     resource_group_name  = "<backend-resource-group>"
+#     storage_account_name = "<backend-storage-account>"
+#     container_name       = "tfstate"
+#     key                  = "test.terraform.tfstate"
+#   }
+# }
 
 provider "azurerm" {
   features {
@@ -45,20 +45,22 @@ module "Key_Vault" {
 }
 
 module "Api_Management_Console" {
+  source = "../modules/Api_Management_Console"
+  
+  subscription_id              = var.subscription_id
+  api_management_console_list  = var.api_management_console_list
+  api_connection_details       = var.api_connection_details
+  resource_group_names         = module.Resource_Group.resource_group_list_name
+  resource_group_mapping       = var.resource_group_mapping
+  region_mapping               = var.region_mapping
+  service_type                 = var.service_type_mapping["Api_Management_Console"]
+  environment_name             = var.environment_mapping[var.env_name]
+  
   depends_on = [
     module.Key_Vault,
     module.Resource_Group,
     module.Networking
   ]
-  source                 = "../modules/Api_Management_Console"
-  api_management_console = var.api_management_console_list
-
-  resource_group_names   = module.Resource_Group.resource_group_list_name
-  resource_group_mapping = var.resource_group_mapping
-
-  region_mapping   = var.region_mapping
-  service_type     = var.service_type_mapping["Api_Management_Console"]
-  environment_name = var.environment_mapping[var.env_name]
 }
 
 module "Managed_Identities" {
@@ -75,27 +77,30 @@ module "Managed_Identities" {
 }
 
 module "Networking" {
-  depends_on = [module.Resource_Group]
-  source     = "../modules/Networking"
-
-  Virtual_Network        = var.VNET
+  source = "../modules/Networking"
+  
+  subscription_id        = var.subscription_id
+  VNET                   = var.VNET
+  Private_Endpoint       = var.Private_Endpoint
+  Public_Ip_Prefix       = var.Public_Ip_Prefix
   subnets                = var.subnets
   Nat_Gateway            = var.Nat_Gateway
   NSG                    = var.NSG
   Private_Dns_Zone       = var.Private_Dns_Zone
   resource_group_names   = module.Resource_Group.resource_group_list_name
   resource_group_mapping = var.resource_group_mapping
-
-  region_mapping   = var.region_mapping
-  service_type     = var.service_type_mapping["Virtual_Network"]
-  environment_name = var.environment_mapping[var.env_name]
+  region_mapping         = var.region_mapping
+  service_type           = var.service_type_mapping["Virtual_Network"]
+  environment_name       = var.environment_mapping[var.env_name]
+  
+  depends_on = [module.Resource_Group]
 }
 
 module "Storage_Accounts" {
   depends_on = [module.Resource_Group]
   source     = "../modules/Storage_Accounts"
 
-  Storage_Accounts       = var.Storage_Accounts
+  storage_accounts       = var.Storage_Accounts
   resource_group_names   = module.Resource_Group.resource_group_list_name
   resource_group_mapping = var.resource_group_mapping
 
@@ -119,48 +124,56 @@ module "App_Service_Plan" {
 }
 
 module "App_Service" {
+  source = "../modules/App_Service"
+  
+  subscription_id          = var.subscription_id
+  application_insight_list = module.Application_Insights.application_insight_list
+  App_Service              = var.App_Service
+  App_Service_Slot         = var.App_Service_Slot
+  resource_group_names     = module.Resource_Group.resource_group_list_name
+  resource_group_mapping   = var.resource_group_mapping
+  region_mapping           = var.region_mapping
+  service_type             = var.service_type_mapping["App_Service"]
+  environment_name         = var.environment_mapping[var.env_name]
+  
   depends_on = [
     module.Resource_Group,
     module.App_Service_Plan,
     module.Storage_Accounts,
-    module.Networking
+    module.Networking,
+    module.Application_Insights
   ]
-  source = "../modules/App_Service"
-
-  App_Service            = var.App_Service
-  App_Service_Slot       = var.App_Service_Slot
-  resource_group_names   = module.Resource_Group.resource_group_list_name
-  resource_group_mapping = var.resource_group_mapping
-
-  region_mapping   = var.region_mapping
-  service_type     = var.service_type_mapping["App_Service"]
-  environment_name = var.environment_mapping[var.env_name]
 }
 
 module "Function_app" {
+  source = "../modules/Function_app"
+  
+  subscription_id          = var.subscription_id
+  application_insight_list = module.Application_Insights.application_insight_list
+  storage_accounts         = module.Storage_Accounts.storage_accounts
+  Function_App_List        = var.Function_App_List
+  resource_group_names     = module.Resource_Group.resource_group_list_name
+  resource_group_mapping   = var.resource_group_mapping
+  region_mapping           = var.region_mapping
+  service_type             = var.service_type_mapping["Function_App"]
+  environment_name         = var.environment_mapping[var.env_name]
+  
   depends_on = [
     module.Resource_Group,
     module.App_Service_Plan,
     module.Storage_Accounts,
-    module.Networking
+    module.Networking,
+    module.Application_Insights
   ]
-  source = "../modules/Function_app"
-
-  Function_App_List      = var.Function_App_List
-  resource_group_names   = module.Resource_Group.resource_group_list_name
-  resource_group_mapping = var.resource_group_mapping
-
-  region_mapping   = var.region_mapping
-  service_type     = var.service_type_mapping["Function_App"]
-  environment_name = var.environment_mapping[var.env_name]
 }
 
 module "SQL_Server" {
   depends_on = [module.Resource_Group]
   source     = "../modules/SQL_Server"
+  subscription_id = var.subscription_id
 
   SQL_Server             = var.SQL_Server
-  SQL_DB                 = var.SQL_DB
+  SQL_Database           = var.SQL_DB
   Redis_Cache            = var.Redis_Cache
   Elastic_Job_Agent      = var.Elastic_Job_Agent
   resource_group_names   = module.Resource_Group.resource_group_list_name
@@ -188,6 +201,7 @@ module "SQL_Replica_Server" {
 module "Service_Bus" {
   depends_on = [module.Resource_Group]
   source     = "../modules/Service_Bus"
+  subscription_id = var.subscription_id
 
   Service_Bus_Namespace  = var.Service_Bus_Namespace
   Service_Bus_Topic      = var.Service_Bus_Topic
@@ -202,16 +216,17 @@ module "Service_Bus" {
 }
 
 module "Application_Insights" {
-  depends_on = [module.Resource_Group, module.Log_Analytics_Workspace]
-  source     = "../modules/Application_Insights"
-
+  source = "../modules/Application_Insights"
+  
+  subscription_id        = var.subscription_id
   Application_Insights   = var.Application_Insights
   resource_group_names   = module.Resource_Group.resource_group_list_name
   resource_group_mapping = var.resource_group_mapping
-
-  region_mapping   = var.region_mapping
-  service_type     = var.service_type_mapping["Application_Insights"]
-  environment_name = var.environment_mapping[var.env_name]
+  region_mapping         = var.region_mapping
+  service_type           = var.service_type_mapping["Application_Insights"]
+  environment_name       = var.environment_mapping[var.env_name]
+  
+  depends_on = [module.Resource_Group, module.Log_Analytics_Workspace]
 }
 
 module "Log_Analytics_Workspace" {
@@ -228,19 +243,19 @@ module "Log_Analytics_Workspace" {
 }
 
 module "Logic_Apps" {
-  depends_on = [module.Resource_Group]
-  source     = "../modules/Logic_Apps"
-
+  source = "../modules/Logic_Apps"
+  
+  subscription_id                   = var.subscription_id
   Logic_App_Workflow_List           = var.Logic_App_Workflow_List
   Logic_App_Trigger_Recurrence_List = var.Logic_App_Trigger_Recurrence_List
   Logic_App_Action_Custom_List      = var.Logic_App_Action_Custom_List
-  api_connection_details            = var.api_connection_details
   resource_group_names              = module.Resource_Group.resource_group_list_name
   resource_group_mapping            = var.resource_group_mapping
-
-  region_mapping   = var.region_mapping
-  service_type     = var.service_type_mapping["Logic_Apps"]
-  environment_name = var.environment_mapping[var.env_name]
+  region_mapping                    = var.region_mapping
+  service_type                      = var.service_type_mapping["Logic_Apps"]
+  environment_name                  = var.environment_mapping[var.env_name]
+  
+  depends_on = [module.Resource_Group]
 }
 
 module "Action_Group" {

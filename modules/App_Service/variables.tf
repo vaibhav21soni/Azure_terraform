@@ -55,7 +55,6 @@ variable "App_Service" {
       use_32_bit_worker_process            = bool
       vnet_route_all_enabled               = bool
       websockets_enabled                   = bool
-      number_of_workers                    = number
       health_check_path                    = string
       linux_fx_version                     = string
       php_version                          = string
